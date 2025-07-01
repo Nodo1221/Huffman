@@ -42,10 +42,11 @@ void heapify(vector<Node*> &heap, size_t i) {
 void heapify_up(vector<Node*> &heap, size_t i) {
     while (i != 0) {
         size_t parent = (i - 1) / 2;
-        if (heap[parent]->freq >= heap[i]->freq)
+        if (heap[parent]->freq <= heap[i]->freq)
             break;
         
         swp_p(heap[parent], heap[i]);
+        i = parent;
     }
 }
 
@@ -57,7 +58,7 @@ void build_heap(vector<Node*> &heap) {
 }
 
 vector<Node*> parse(string str) {
-    unordered_map<char, unsigned long long> freqs;
+    unordered_map<char, unsigned> freqs;
     vector<Node *> heap;
 
     for (const char c : str)
@@ -71,6 +72,33 @@ vector<Node*> parse(string str) {
     return heap;
 }
 
+Node* pop_min(vector<Node*> &heap) {
+    Node* min = heap[0];
+    heap[0] = heap[heap.size() - 1];
+    heap.pop_back();
+    heapify(heap, 0);
+    return min;
+}
+
+void add(vector<Node*> &heap, Node* el) {
+    heap.push_back(el);
+    heapify_up(heap, heap.size() - 1);
+}
+
+Node* huffman(vector<Node*> &heap) {
+    while (heap.size() > 1) {
+        Node* left = pop_min(heap);
+        Node* right = pop_min(heap);
+
+        Node* combined = new Node(0, left->freq + right->freq);
+        combined->left = left;
+        combined->right= right;
+        add(heap, combined);
+    }
+
+    return pop_min(heap);
+}
+
 int main() {
     string abc = "aaaaaabbbddddeeeffdfadhskfgjdsakfds";
     
@@ -82,7 +110,12 @@ int main() {
 
     cout << endl;
 
-    // unordered_map<char, unsigned long long> map = parse(abc);
+    Node* n = huffman(heap);
+    
+    cout << n->c << " " << n->freq << endl;
+    cout << n->left->c << " " << n->right->freq << endl;
+
+    // unordered_map<char, unsigned> map = parse(abc);
 
     // for (const auto& [key, val] : map) {
     //     cout << key << ": " << val << endl;
