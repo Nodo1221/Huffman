@@ -90,19 +90,44 @@ unique_ptr<Heap> parse(string str) {
     return heap;
 }
 
-// Node* huffman(vector<Node*> &heap) {
-//     while (heap.size() > 1) {
-//         Node* left = pop_min(heap);
-//         Node* right = pop_min(heap);
+Node* huffman(unique_ptr<Heap>& heap) {
+    while (heap->heap.size() > 1) {
+        Node* left = heap->pop_min();
+        Node* right = heap->pop_min();
 
-//         Node* combined = new Node(0, left->freq + right->freq);
-//         combined->left = left;
-//         combined->right= right;
-//         add(heap, combined);
-//     }
+        Node* combined = new Node(0, left->freq + right->freq);
+        combined->left = left;
+        combined->right= right;
+        heap->add(combined);
+    }
 
-//     return pop_min(heap);
-// }
+    return heap->pop_min();
+}
+
+void in_order(Node* node) {
+    if (node) {
+        in_order(node->left);
+        cout << node->c << ":" << node->freq << endl;
+        in_order(node->right);
+    }
+}
+
+void printTree(const Node* node, const std::string& prefix = "", bool isLeft = true) {
+    if (!node) return;
+
+    std::cout << prefix;
+
+    std::cout << (isLeft ? "├──" : "└──" );
+
+    if (node->c != '\0') {
+        std::cout << "'" << node->c << "' (" << node->freq << ")\n";
+    } else {
+        std::cout << "* (" << node->freq << ")\n";
+    }
+
+    printTree(node->left, prefix + (isLeft ? "│   " : "    "), true);
+    printTree(node->right, prefix + (isLeft ? "│   " : "    "), false);
+}
 
 int main() {
     string abc = "aaaaaabbbddddeeeffdfadhskfgjdsakfds";
@@ -115,8 +140,10 @@ int main() {
 
     cout << endl;
 
-    // Node* n = huffman(heap);
+    Node* n = huffman(heap);
     
+    printTree(n);
+
     // cout << n->c << " " << n->freq << endl;
     // cout << n->left->c << " " << n->right->freq << endl;
 
