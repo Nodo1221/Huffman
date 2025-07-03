@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 using namespace std;
 
@@ -22,98 +23,102 @@ public:
         : left(nullptr), right(nullptr), c(c), freq(freq) {}
 };
 
-void heapify(vector<Node*> &heap, size_t i) {
-    size_t left = i * 2 + 1;
-    size_t right = i * 2 + 2;
-    size_t min = i;
+class Heap {
+public:
+    vector<Node*> heap;
 
-    if (left < heap.size() && heap[left]->freq < heap[min]->freq)
-        min = left;
-    
-    if (right < heap.size() && heap[right]->freq < heap[min]->freq)
-        min = right;
+    void heapify(size_t i) {
+        size_t left = i * 2 + 1;
+        size_t right = i * 2 + 2;
+        size_t min = i;
 
-    if (min != i) {
-        swp_p(heap[min], heap[i]);
-        heapify(heap, min);
-    }
-}
-
-void heapify_up(vector<Node*> &heap, size_t i) {
-    while (i != 0) {
-        size_t parent = (i - 1) / 2;
-        if (heap[parent]->freq <= heap[i]->freq)
-            break;
+        if (left < heap.size() && heap[left]->freq < heap[min]->freq)
+            min = left;
         
-        swp_p(heap[parent], heap[i]);
-        i = parent;
-    }
-}
+        if (right < heap.size() && heap[right]->freq < heap[min]->freq)
+            min = right;
 
-void build_heap(vector<Node*> &heap) {
-    for (size_t i = heap.size() / 2 - 1; true; i--) {
-        heapify(heap, i);
-        if (i == 0) break;
+        if (min != i) {
+            swp_p(heap[min], heap[i]);
+            heapify(min);
+        }
     }
-}
 
-vector<Node*> parse(string str) {
+    void heapify_up(size_t i) {
+        while (i != 0) {
+            size_t parent = (i - 1) / 2;
+            if (heap[parent]->freq <= heap[i]->freq)
+                break;
+            
+            swp_p(heap[parent], heap[i]);
+            i = parent;
+        }
+    }
+
+    void build_heap() {
+        for (size_t i = heap.size() / 2 - 1; true; i--) {
+            heapify(i);
+            if (i == 0) break;
+        }
+    }
+
+    Node* pop_min() {
+        Node* min = heap[0];
+        heap[0] = heap[heap.size() - 1];
+        heap.pop_back();
+        heapify(0);
+        return min;
+    }
+
+    void add(Node* el) {
+        heap.push_back(el);
+        heapify_up(heap.size() - 1);
+    }
+};
+
+unique_ptr<Heap> parse(string str) {
     unordered_map<char, unsigned> freqs;
-    vector<Node *> heap;
+    unique_ptr<Heap> heap = make_unique<Heap>();
 
     for (const char c : str)
         freqs[c]++;
     
     for (const auto& [c, freq] : freqs) {
-        heap.push_back(new Node(c, freq));
-        heapify_up(heap, heap.size() - 1);
+        heap->add(new Node(c, freq));
     }
 
     return heap;
 }
 
-Node* pop_min(vector<Node*> &heap) {
-    Node* min = heap[0];
-    heap[0] = heap[heap.size() - 1];
-    heap.pop_back();
-    heapify(heap, 0);
-    return min;
-}
+// Node* huffman(vector<Node*> &heap) {
+//     while (heap.size() > 1) {
+//         Node* left = pop_min(heap);
+//         Node* right = pop_min(heap);
 
-void add(vector<Node*> &heap, Node* el) {
-    heap.push_back(el);
-    heapify_up(heap, heap.size() - 1);
-}
+//         Node* combined = new Node(0, left->freq + right->freq);
+//         combined->left = left;
+//         combined->right= right;
+//         add(heap, combined);
+//     }
 
-Node* huffman(vector<Node*> &heap) {
-    while (heap.size() > 1) {
-        Node* left = pop_min(heap);
-        Node* right = pop_min(heap);
-
-        Node* combined = new Node(0, left->freq + right->freq);
-        combined->left = left;
-        combined->right= right;
-        add(heap, combined);
-    }
-
-    return pop_min(heap);
-}
+//     return pop_min(heap);
+// }
 
 int main() {
     string abc = "aaaaaabbbddddeeeffdfadhskfgjdsakfds";
     
-    vector<Node*> heap = parse(abc);
+    unique_ptr<Heap> heap = parse(abc);
 
-    for (auto c : heap) {
+    for (auto c : heap->heap) {
         cout << c->c << ": " << c->freq << " ";
     }
 
     cout << endl;
 
-    Node* n = huffman(heap);
+    // Node* n = huffman(heap);
     
-    cout << n->c << " " << n->freq << endl;
-    cout << n->left->c << " " << n->right->freq << endl;
+    // cout << n->c << " " << n->freq << endl;
+    // cout << n->left->c << " " << n->right->freq << endl;
 
     // unordered_map<char, unsigned> map = parse(abc);
 
