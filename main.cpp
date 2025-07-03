@@ -5,17 +5,10 @@
 
 using namespace std;
 
-template<typename T>
-void swp_p(T*& p1, T*& p2) {
-    T* tmp = p1;
-    p1 = p2;
-    p2 = tmp;
-}
-
 class Node {
 public:
-    Node* left;
-    Node* right;
+    unique_ptr<Node> left;
+    unique_ptr<Node> right;
     char c;
     unsigned freq;
 
@@ -25,7 +18,7 @@ public:
 
 class Heap {
 public:
-    vector<Node*> heap;
+    vector<unique_ptr<Node>> heap;
 
     void heapify(size_t i) {
         size_t left = i * 2 + 1;
@@ -39,7 +32,7 @@ public:
             min = right;
 
         if (min != i) {
-            swp_p(heap[min], heap[i]);
+            swap(heap[min], heap[i]);
             heapify(min);
         }
     }
@@ -50,7 +43,7 @@ public:
             if (heap[parent]->freq <= heap[i]->freq)
                 break;
             
-            swp_p(heap[parent], heap[i]);
+            swap(heap[parent], heap[i]);
             i = parent;
         }
     }
@@ -62,21 +55,21 @@ public:
         }
     }
 
-    Node* pop_min() {
-        Node* min = heap[0];
-        heap[0] = heap[heap.size() - 1];
+    unique_ptr<Node> pop_min() {
+        unique_ptr<Node> min = move(heap[0]);
+        heap[0] = move(heap[heap.size() - 1]);
         heap.pop_back();
         heapify(0);
         return min;
     }
 
-    void add(Node* el) {
-        heap.push_back(el);
+    void add(unique_ptr<Node> node){
+        heap.push_back(move(node));
         heapify_up(heap.size() - 1);
     }
 };
 
-unique_ptr<Heap> parse(string str) {
+unique_ptr<Heap> parse(const string& str) {
     unordered_map<char, unsigned> freqs;
     unique_ptr<Heap> heap = make_unique<Heap>();
 
@@ -84,75 +77,51 @@ unique_ptr<Heap> parse(string str) {
         freqs[c]++;
     
     for (const auto& [c, freq] : freqs) {
-        heap->add(new Node(c, freq));
+        heap->add(make_unique<Node>(c, freq));
     }
 
     return heap;
 }
 
-Node* huffman(unique_ptr<Heap>& heap) {
+unique_ptr<Node> huffman(unique_ptr<Heap>& heap) {
     while (heap->heap.size() > 1) {
-        Node* left = heap->pop_min();
-        Node* right = heap->pop_min();
+        unique_ptr<Node> left = heap->pop_min();
+        unique_ptr<Node> right = heap->pop_min();
 
-        Node* combined = new Node(0, left->freq + right->freq);
-        combined->left = left;
-        combined->right= right;
-        heap->add(combined);
+        unique_ptr<Node> combined = make_unique<Node>(0, left->freq + right->freq);
+        combined->left = move(left);
+        combined->right= move(right);
+        heap->add(move(combined));
     }
 
     return heap->pop_min();
 }
 
-void in_order(Node* node) {
-    if (node) {
-        in_order(node->left);
-        cout << node->c << ":" << node->freq << endl;
-        in_order(node->right);
-    }
-}
-
-void printTree(const Node* node, const std::string& prefix = "", bool isLeft = true) {
+void printTree(const Node* node, const string& prefix = "") {
     if (!node) return;
 
-    std::cout << prefix;
-
-    std::cout << (isLeft ? "├──" : "└──" );
-
     if (node->c != '\0') {
-        std::cout << "'" << node->c << "' (" << node->freq << ")\n";
-    } else {
-        std::cout << "* (" << node->freq << ")\n";
+        cout << node->c << ": " << prefix << endl;
     }
 
-    printTree(node->left, prefix + (isLeft ? "│   " : "    "), true);
-    printTree(node->right, prefix + (isLeft ? "│   " : "    "), false);
+    printTree(node->left.get(), prefix + '0');
+    printTree(node->right.get(), prefix + '1');
 }
 
 int main() {
-    string abc = "aaaaaabbbddddeeeffdfadhskfgjdsakfds";
+    string abc = "aaaaaabbbdddeeeeffdfadskfbbbbbbbbbbbbgdsakfds";
     
     unique_ptr<Heap> heap = parse(abc);
 
-    for (auto c : heap->heap) {
+    for (const auto& c : heap->heap) {
         cout << c->c << ": " << c->freq << " ";
     }
 
     cout << endl;
 
-    Node* n = huffman(heap);
-    
-    printTree(n);
+    unique_ptr<Node> n = huffman(heap);
 
-    // cout << n->c << " " << n->freq << endl;
-    // cout << n->left->c << " " << n->right->freq << endl;
-
-    // unordered_map<char, unsigned> map = parse(abc);
-
-    // for (const auto& [key, val] : map) {
-    //     cout << key << ": " << val << endl;
-    // }
-
+    printTree(n.get());
 
     return 0;
 }
