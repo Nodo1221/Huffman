@@ -88,7 +88,7 @@ unique_ptr<Node> huffman(unique_ptr<Heap>& heap) {
         unique_ptr<Node> left = heap->pop_min();
         unique_ptr<Node> right = heap->pop_min();
 
-        unique_ptr<Node> combined = make_unique<Node>(0, left->freq + right->freq);
+        unique_ptr<Node> combined = make_unique<Node>('\0', left->freq + right->freq);
         combined->left = move(left);
         combined->right= move(right);
         heap->add(move(combined));
@@ -110,18 +110,14 @@ void printTree(const Node* node, const string& prefix = "") {
 
 int main() {
     string abc = "aaaaaabbbdddeeeeffdfadskfbbbbbbbbbbbbgdsakfds";
-    
     unique_ptr<Heap> heap = parse(abc);
 
-    for (const auto& c : heap->heap) {
+    for (const auto& c : heap->heap)
         cout << c->c << ": " << c->freq << " ";
-    }
-
     cout << endl;
 
-    unique_ptr<Node> n = huffman(heap);
-
-    printTree(n.get());
+    unique_ptr<Node> huff = huffman(heap);
+    printTree(huff.get());
 
     return 0;
 }
